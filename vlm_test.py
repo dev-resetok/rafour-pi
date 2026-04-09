@@ -5,6 +5,9 @@ import cv2
 import numpy as np
 from pathlib import Path
 
+# 번역 라이브러리 추가
+from deep_translator import GoogleTranslator
+
 from hailo_platform import VDevice
 from hailo_platform.genai import VLM
 
@@ -74,7 +77,6 @@ def main():
         ]
 
         # Load and convert image
-        # Use standard REPO_ROOT from defines
         image_path = REPO_ROOT / 'doc' / 'images' / 'qwen_test.jpg'
 
         print(f"[3/5] Loading image from: {image_path}")
@@ -94,9 +96,19 @@ def main():
         print(f"   User question: '{prompt[1]['content'][1]['text']}'")
         response = vlm.generate_all(prompt=prompt, frames=[image], temperature=0.1, seed=42, max_generated_tokens=200)
 
+        # 결과 텍스트 정제
+        final_response = response.split(". [{'type'")[0].split("<|im_end|>")[0]
+
+        # 한국어 번역 
+        try:
+            korean_response = GoogleTranslator(source='en', target='ko').translate(final_response)
+        except Exception as e:
+            korean_response = f"(번역 실패: {e})"
+
         print("\nResponse received:")
         print("-" * 60)
-        print(response.split(". [{'type'")[0].split("<|im_end|>")[0])
+        print(f"English: {final_response}")
+        print(f"한글 번역: {korean_response}")
         print("-" * 60)
         print("\n✓ Example completed successfully")
 
@@ -122,4 +134,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
